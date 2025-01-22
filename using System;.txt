@@ -1,0 +1,159 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+
+// Base class for questions
+public abstract class Question : ICloneable, IComparable<Question>
+{
+    public string QuestionHeader { get; set; }
+    public string QuestionBody { get; set; }
+    public float QuestionMark { get; set; }
+    public int QuestionID { get; set; }
+    public string QuestionDifficulty { get; set; }
+    public List<Answer> PossibleAnswers { get; set; } = new List<Answer>();
+
+    public abstract void Show();
+
+    public object Clone() => MemberwiseClone();
+
+    public int CompareTo(Question other)
+    {
+        if (other == null) return 1;
+        int result = QuestionID.CompareTo(other.QuestionID);
+        return result == 0 ? QuestionDifficulty.CompareTo(other.QuestionDifficulty) : result;
+    }
+
+    public override string ToString() =>
+        JsonSerializer.Serialize(this);
+}
+
+// Derived classes for specific question types
+public class TrueFalseQuestion : Question
+{
+    public bool IsCorrect { get; set; }
+
+    public override void Show()
+    {
+        Console.WriteLine($"{QuestionHeader}: {QuestionBody} (True/False)");
+    }
+}
+
+public class MCQQuestion : Question
+{
+    public List<string> AnswerOptions { get; set; } = new List<string>();
+    public int CorrectAnswerIndex { get; set; }
+
+    public override void Show()
+    {
+        Console.WriteLine($"{QuestionHeader}: {QuestionBody}");
+        for (int i = 0; i < AnswerOptions.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {AnswerOptions[i]}");
+        }
+    }
+}
+
+// Answer class
+public class Answer
+{
+    public int AnswerID { get; set; }
+    public string AnswerText { get; set; }
+    public bool IsCorrect { get; set; }
+}
+
+// Base class for exams
+public abstract class Exam
+{
+    public int ExamDuration { get; set; }
+    public List<Question> ExamQuestions { get; set; } = new List<Question>();
+
+    public abstract void Display();
+}
+
+// Derived classes for specific exam types
+public class FinalExam : Exam
+{
+    public override void Display()
+    {
+        Console.WriteLine("Final Exam:");
+        foreach (var question in ExamQuestions)
+        {
+            question.Show();
+        }
+    }
+}
+
+public class PracticalExam : Exam
+{
+    public override void Display()
+    {
+        Console.WriteLine("Practical Exam:");
+        foreach (var question in ExamQuestions)
+        {
+            question.Show();
+        }
+    }
+}
+
+// Subject class
+public class Subject
+{
+    public int SubjectID { get; set; }
+    public string SubjectName { get; set; }
+    public Exam AssignedExam { get; set; }
+
+    public void AssignExam(Exam exam) => AssignedExam = exam;
+}
+
+// Main program
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        Subject subject = new Subject { SubjectID = 101, SubjectName = "Mathematics" };
+
+        FinalExam exam = new FinalExam { ExamDuration = 90 };
+        exam.ExamQuestions.Add(new TrueFalseQuestion
+        {
+            QuestionHeader = "Q1",
+            QuestionBody = "The Earth is flat.",
+            QuestionMark = 1,
+            QuestionID = 1,
+            QuestionDifficulty = "Easy",
+            IsCorrect = false
+        });
+
+        exam.ExamQuestions.Add(new MCQQuestion
+        {
+            QuestionHeader = "Q2",
+            QuestionBody = "What is 10 + 5?",
+            QuestionMark = 2,
+            QuestionID = 2,
+            QuestionDifficulty = "Medium",
+            AnswerOptions = new List<string> { "10", "15", "20" },
+            CorrectAnswerIndex = 1
+        });
+
+        subject.AssignExam(exam);
+        subject.AssignedExam.Display();
+
+        SaveToJson(exam, "exam.json");
+        Exam loadedExam = LoadFromJson("exam.json");
+        Console.WriteLine("\nLoaded Exam:");
+        loadedExam.Display();
+    }
+
+    public static void SaveToJson(Exam exam, string filePath)
+    {
+        string json = JsonSerializer.Serialize(exam);
+        File.WriteAllText(filePath, json);
+        Console.WriteLine($"Exam saved to {filePath}");
+    }
+
+    public static Exam LoadFromJson(string filePath)
+    {
+        string json = File.ReadAllText(filePath);
+        return JsonSerializer.Deserialize<Exam>(json);
+    }
+}

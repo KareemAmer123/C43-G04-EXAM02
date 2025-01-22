@@ -4,24 +4,24 @@ using System.IO;
 using System.Text.Json;
 
 // Base class for questions
-public abstract class Question : ICloneable, IComparable<Question>
+public abstract class Inquiry : ICloneable, IComparable<Inquiry>
 {
-    public string QuestionHeader { get; set; }
-    public string QuestionBody { get; set; }
-    public float QuestionMark { get; set; }
-    public int QuestionID { get; set; }
-    public string QuestionDifficulty { get; set; }
-    public List<Answer> PossibleAnswers { get; set; } = new List<Answer>();
+    public string Title { get; set; }
+    public string Content { get; set; }
+    public float Score { get; set; }
+    public int Identifier { get; set; }
+    public string Complexity { get; set; }
+    public List<Solution> Choices { get; set; } = new List<Solution>();
 
-    public abstract void Show();
+    public abstract void Display();
 
     public object Clone() => MemberwiseClone();
 
-    public int CompareTo(Question other)
+    public int CompareTo(Inquiry other)
     {
         if (other == null) return 1;
-        int result = QuestionID.CompareTo(other.QuestionID);
-        return result == 0 ? QuestionDifficulty.CompareTo(other.QuestionDifficulty) : result;
+        int comparisonResult = Identifier.CompareTo(other.Identifier);
+        return comparisonResult == 0 ? Complexity.CompareTo(other.Complexity) : comparisonResult;
     }
 
     public override string ToString() =>
@@ -29,131 +29,131 @@ public abstract class Question : ICloneable, IComparable<Question>
 }
 
 // Derived classes for specific question types
-public class TrueFalseQuestion : Question
+public class BinaryInquiry : Inquiry
 {
-    public bool IsCorrect { get; set; }
+    public bool AnswerValidity { get; set; }
 
-    public override void Show()
+    public override void Display()
     {
-        Console.WriteLine($"{QuestionHeader}: {QuestionBody} (True/False)");
+        Console.WriteLine($"{Title}: {Content} (True/False)");
     }
 }
 
-public class MCQQuestion : Question
+public class MultipleChoiceInquiry : Inquiry
 {
-    public List<string> AnswerOptions { get; set; } = new List<string>();
-    public int CorrectAnswerIndex { get; set; }
+    public List<string> Options { get; set; } = new List<string>();
+    public int RightOptionIndex { get; set; }
 
-    public override void Show()
+    public override void Display()
     {
-        Console.WriteLine($"{QuestionHeader}: {QuestionBody}");
-        for (int i = 0; i < AnswerOptions.Count; i++)
+        Console.WriteLine($"{Title}: {Content}");
+        for (int i = 0; i < Options.Count; i++)
         {
-            Console.WriteLine($"{i + 1}. {AnswerOptions[i]}");
+            Console.WriteLine($"{i + 1}. {Options[i]}");
         }
     }
 }
 
 // Answer class
-public class Answer
+public class Solution
 {
-    public int AnswerID { get; set; }
-    public string AnswerText { get; set; }
-    public bool IsCorrect { get; set; }
+    public int SolutionID { get; set; }
+    public string Text { get; set; }
+    public bool IsAccurate { get; set; }
 }
 
 // Base class for exams
-public abstract class Exam
+public abstract class Test
 {
-    public int ExamDuration { get; set; }
-    public List<Question> ExamQuestions { get; set; } = new List<Question>();
+    public int Duration { get; set; }
+    public List<Inquiry> Problems { get; set; } = new List<Inquiry>();
 
-    public abstract void Display();
+    public abstract void Render();
 }
 
 // Derived classes for specific exam types
-public class FinalExam : Exam
+public class ComprehensiveTest : Test
 {
-    public override void Display()
+    public override void Render()
     {
         Console.WriteLine("Final Exam:");
-        foreach (var question in ExamQuestions)
+        foreach (var problem in Problems)
         {
-            question.Show();
+            problem.Display();
         }
     }
 }
 
-public class PracticalExam : Exam
+public class HandsOnTest : Test
 {
-    public override void Display()
+    public override void Render()
     {
         Console.WriteLine("Practical Exam:");
-        foreach (var question in ExamQuestions)
+        foreach (var problem in Problems)
         {
-            question.Show();
+            problem.Display();
         }
     }
 }
 
 // Subject class
-public class Subject
+public class Topic
 {
-    public int SubjectID { get; set; }
-    public string SubjectName { get; set; }
-    public Exam AssignedExam { get; set; }
+    public int Code { get; set; }
+    public string Name { get; set; }
+    public Test AssignedTest { get; set; }
 
-    public void AssignExam(Exam exam) => AssignedExam = exam;
+    public void AssignTest(Test test) => AssignedTest = test;
 }
 
 // Main program
-public class Program
+public class EntryPoint
 {
     public static void Main(string[] args)
     {
-        Subject subject = new Subject { SubjectID = 101, SubjectName = "Mathematics" };
+        Topic math = new Topic { Code = 101, Name = "Mathematics" };
 
-        FinalExam exam = new FinalExam { ExamDuration = 90 };
-        exam.ExamQuestions.Add(new TrueFalseQuestion
+        ComprehensiveTest mathTest = new ComprehensiveTest { Duration = 90 };
+        mathTest.Problems.Add(new BinaryInquiry
         {
-            QuestionHeader = "Q1",
-            QuestionBody = "The Earth is flat.",
-            QuestionMark = 1,
-            QuestionID = 1,
-            QuestionDifficulty = "Easy",
-            IsCorrect = false
+            Title = "Q1",
+            Content = "The Earth is flat.",
+            Score = 1,
+            Identifier = 1,
+            Complexity = "Easy",
+            AnswerValidity = false
         });
 
-        exam.ExamQuestions.Add(new MCQQuestion
+        mathTest.Problems.Add(new MultipleChoiceInquiry
         {
-            QuestionHeader = "Q2",
-            QuestionBody = "What is 10 + 5?",
-            QuestionMark = 2,
-            QuestionID = 2,
-            QuestionDifficulty = "Medium",
-            AnswerOptions = new List<string> { "10", "15", "20" },
-            CorrectAnswerIndex = 1
+            Title = "Q2",
+            Content = "What is 10 + 5?",
+            Score = 2,
+            Identifier = 2,
+            Complexity = "Medium",
+            Options = new List<string> { "10", "15", "20" },
+            RightOptionIndex = 1
         });
 
-        subject.AssignExam(exam);
-        subject.AssignedExam.Display();
+        math.AssignTest(mathTest);
+        math.AssignedTest.Render();
 
-        SaveToJson(exam, "exam.json");
-        Exam loadedExam = LoadFromJson("exam.json");
-        Console.WriteLine("\nLoaded Exam:");
-        loadedExam.Display();
+        ExportToJson(mathTest, "test.json");
+        Test loadedTest = ImportFromJson("test.json");
+        Console.WriteLine("\nLoaded Test:");
+        loadedTest.Render();
     }
 
-    public static void SaveToJson(Exam exam, string filePath)
+    public static void ExportToJson(Test test, string filePath)
     {
-        string json = JsonSerializer.Serialize(exam);
-        File.WriteAllText(filePath, json);
-        Console.WriteLine($"Exam saved to {filePath}");
+        string serializedData = JsonSerializer.Serialize(test);
+        File.WriteAllText(filePath, serializedData);
+        Console.WriteLine($"Test saved to {filePath}");
     }
 
-    public static Exam LoadFromJson(string filePath)
+    public static Test ImportFromJson(string filePath)
     {
-        string json = File.ReadAllText(filePath);
-        return JsonSerializer.Deserialize<Exam>(json);
+        string deserializedData = File.ReadAllText(filePath);
+        return JsonSerializer.Deserialize<Test>(deserializedData);
     }
 }
